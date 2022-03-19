@@ -1,9 +1,16 @@
 package com.codepath.apps.restclienttemplate
 
+import android.app.Activity
 import android.content.ContentValues.TAG
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -51,6 +58,45 @@ class TimelineActivity : AppCompatActivity() {
         populateHomeTimeLine()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+
+
+    // Handles clicks on menu
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId== R.id.Compose){
+            // navigate to compose screen
+            val intent= Intent(this, ComposeActivity::class.java)
+            editActivityResultLauncher.launch(intent)
+        }
+        //startActivityForResult(intent, REQUEST_CODE)
+
+        return super.onOptionsItemSelected(item)
+    }
+
+    // this method is called when we come back from composeActivity
+    var editActivityResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        // If the user comes back to this activity from EditActivity
+        // with no error or cancellation
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            // Get the data passed from EditActivity
+            if (data != null) {
+                val tweet = data?.getParcelableExtra("tweet") as Tweet
+
+                tweets.add(0, tweet)
+
+                adapter.notifyItemInserted(0)
+                rvTweets.smoothScrollToPosition(0)
+            }
+        }
+    }
+
 
     fun populateHomeTimeLine(){
         client.getHomeTimeLine(object : JsonHttpResponseHandler(){
@@ -92,6 +138,7 @@ class TimelineActivity : AppCompatActivity() {
          companion object{
 
              val TAG = "TimelineActivity"
+             val REQUEST_CODE = 10
          }
 
     }
